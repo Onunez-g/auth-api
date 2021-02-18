@@ -14,13 +14,17 @@ func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Fatalln("Failed to load env vars")
 	}
-	cfg := config.Get()
-	data.ConnectDatabase()
+	config.Cfg = config.Get()
+
+	data.ConnectDatabase(config.Cfg.GetDBConnStr())
+	defer data.CloseConnection()
 
 	r := router.Get()
 
+	data.AutoMigrate()
+
 	log.Println("Server listening...")
-	apiPort := cfg.GetAPIPort()
+	apiPort := config.Cfg.GetAPIPort()
 
 	log.Fatal(http.ListenAndServe(apiPort, r))
 }

@@ -1,8 +1,10 @@
 package data
 
 import (
+	"log"
+
 	"github.com/onunez-g/auth-api/models"
-	"gorm.io/driver/sqlite"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -10,8 +12,8 @@ import (
 var Db *gorm.DB
 var err error
 
-func ConnectDatabase() {
-	Db, err = gorm.Open(sqlite.Open("auth-api.db"), &gorm.Config{})
+func ConnectDatabase(connStr string) {
+	Db, err = gorm.Open(postgres.Open(connStr), &gorm.Config{})
 
 	if err != nil {
 
@@ -21,9 +23,16 @@ func ConnectDatabase() {
 }
 
 func AutoMigrate() {
-	Db.AutoMigrate(&models.UserDTO{})
+	err = Db.AutoMigrate(&models.UserDTO{})
+	if err != nil {
+		log.Println("something happenned in the migration:" + err.Error())
+	}
 }
 
-// func CloseConnection() {
-// 	Db.Debug().Statement.ReflectValue.Close()
-// }
+func CloseConnection() {
+	db, err := Db.DB()
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	db.Close()
+}
