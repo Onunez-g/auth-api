@@ -7,13 +7,16 @@ import (
 )
 
 type Config struct {
-	dbUser    string
-	dbPswd    string
-	dbHost    string
-	dbPort    string
-	dbName    string
-	apiPort   string
-	secretJWT string
+	dbUser         string
+	dbPswd         string
+	dbHost         string
+	dbPort         string
+	dbName         string
+	apiPort        string
+	secretJWT      string
+	githubClientId string
+	githubSecretId string
+	sessionSecret  string
 }
 
 var Cfg *Config
@@ -28,6 +31,9 @@ func Get() *Config {
 	flag.StringVar(&conf.dbName, "dbname", os.Getenv("POSTGRES_DB"), "DB name")
 	flag.StringVar(&conf.apiPort, "apiPort", os.Getenv("API_PORT"), "API Port")
 	flag.StringVar(&conf.secretJWT, "secretjwt", os.Getenv("SECRET_JWT"), "JWT secret key")
+	flag.StringVar(&conf.githubClientId, "githubClientId", os.Getenv("CLIENT_ID"), "Github client ID")
+	flag.StringVar(&conf.githubSecretId, "githubSecretId", os.Getenv("SECRET_ID"), "Github secret ID")
+	flag.StringVar(&conf.sessionSecret, "sessionSecret", os.Getenv("SESSION"), "Cookie session secret")
 	flag.Parse()
 
 	return conf
@@ -54,4 +60,16 @@ func (c *Config) GetAPIPort() string {
 
 func (c *Config) GetJWTSecret() []byte {
 	return []byte(c.secretJWT)
+}
+
+func (c *Config) GetGithubClientId() string {
+	return c.githubClientId
+}
+
+func (c *Config) GetGithubSecretId() string {
+	return c.githubSecretId
+}
+
+func (c *Config) GetSessionSecret() []byte {
+	return []byte(c.sessionSecret)
 }

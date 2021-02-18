@@ -6,10 +6,20 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/dghubble/gologin/github"
+	"github.com/dghubble/sessions"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/onunez-g/auth-api/config"
 	"golang.org/x/crypto/bcrypt"
 )
+
+const (
+	sessionName     = "auth-api"
+	sessionUserKey  = "GithubID"
+	sessionUsername = "githubUsername"
+)
+
+var sessionStore *sessions.CookieStore
 
 func GenerateJWT(user string) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
@@ -64,4 +74,23 @@ func GetHash(pwd []byte) string {
 		log.Println(err)
 	}
 	return string(hash)
+}
+
+func IssueSession() http.Handler {
+	fn := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
+		githubUser, err := github.UserFromContext(ctx)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		// 2. Implement a success handler to issue some form of session
+		sessionStore = sessions.NewCookieStore(config.Cfg.GetSessionSecret(), nil)
+		session := sessionStore.New(sessionName)
+		session.Values[sessionUserKey] = *githubUser.ID
+		session.Values[sessionUsername] = *githubUser.Login
+		session.Save(w)
+		http.Redirect(w, req, "/profile", http.StatusFound)
+	}
+	return http.HandlerFunc(fn)
 }
