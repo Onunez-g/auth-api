@@ -5,4 +5,5 @@ type UserDTO struct {
 	Username string `json:"username"`
 	Email    string `gorm:"unique" json:"email"`
 	Password string `json:"-"`
+	Token    string `json:"token,omitempty" gorm:"-"`
 }
