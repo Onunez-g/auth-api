@@ -23,8 +23,8 @@ func main() {
 
 	data.AutoMigrate()
 
-	log.Println("Server listening...")
 	apiPort := config.Cfg.GetAPIPort()
+	log.Println("Server listening at port: " + apiPort)
 
 	log.Fatal(http.ListenAndServe(apiPort, r))
 }
