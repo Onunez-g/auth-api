@@ -11,18 +11,18 @@ type EmailSender interface {
 	Auth() smtp.Auth
 }
 
-type EmailServer struct {
+type MailSettings struct {
 	User      string
 	Pass      string
 	From      string
 	Smtp      string
-	Port      int
+	Port      string
 	To        string
 	TlsConfig *tls.Config
 }
 
-func (g EmailServer) Send(subject string, body string) error {
-	addr := fmt.Sprintf("%s:%d", g.Smtp, g.Port)
+func (g MailSettings) Send(subject string, body string) error {
+	addr := fmt.Sprintf("%s:%s", g.Smtp, g.Port)
 	msg := "From: " + g.From + "\n" +
 		"To: " + g.To + "\n" +
 		"Subject: " + subject + "\n\n" +
@@ -36,48 +36,10 @@ func (g EmailServer) Send(subject string, body string) error {
 	if err != nil {
 		return err
 	}
-	// conn, err := tls.Dial("tcp", addr, g.TlsConfig)
-	// if err != nil {
-	// 	fmt.Println("tls Dial")
-	// 	return err
-	// }
-	// client, err := smtp.NewClient(conn, g.Smtp)
-	// if err != nil {
-	// 	fmt.Println("New Client")
-	// 	return err
-	// }
-	// if err = client.Auth(auth); err != nil {
-	// 	fmt.Println("Auth")
-	// 	return err
-	// }
-	// if err = client.Mail(g.From); err != nil {
-	// 	fmt.Println("Mail")
-	// 	return err
-	// }
-	// recievers := []string{g.To}
-
-	// for _, k := range recievers {
-	// 	fmt.Println("Sending to: " + k)
-	// 	if err = client.Rcpt(k); err != nil {
-	// 		return err
-	// 	}
-	// }
-	// w, err := client.Data()
-	// if err != nil {
-	// 	return err
-	// }
-	// _, err = w.Write([]byte(msg))
-	// if err != nil {
-	// 	return err
-	// }
-	// err = w.Close()
-	// if err != nil {
-	// 	return err
-	// }
 
 	return nil
 }
 
-func (g EmailServer) Auth() smtp.Auth {
+func (g MailSettings) Auth() smtp.Auth {
 	return smtp.PlainAuth("", g.User, g.Pass, g.Smtp)
 }

@@ -21,7 +21,7 @@ const (
 
 var sessionStore *sessions.CookieStore
 
-func GenerateJWT(user string) (string, error) {
+func GenerateJWT(user string, payload ...interface{}) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 
 	claims := token.Claims.(jwt.MapClaims)
@@ -31,7 +31,13 @@ func GenerateJWT(user string) (string, error) {
 	claims["authorized"] = true
 	claims["user"] = user
 	claims["exp"] = time.Now().Add(time.Minute * 30).Unix()
-
+	for _, v := range payload {
+		if params, ok := v.(map[string]interface{}); ok {
+			for k, i := range params {
+				claims[k] = i
+			}
+		}
+	}
 	tokenString, err := token.SignedString(signingKey)
 
 	if err != nil {
@@ -66,6 +72,22 @@ func IsAuthorized(endpoint func(http.ResponseWriter, *http.Request)) http.Handle
 			fmt.Fprintf(w, "Not Authorized")
 		}
 	})
+}
+
+func GetJWT(tokenString string) error {
+	signingKey := config.Cfg.GetJWTSecret()
+	claims := jwt.MapClaims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		return signingKey, nil
+	})
+	fmt.Println(token)
+	if err != nil {
+		return err
+	}
+	for key, val := range claims {
+		fmt.Printf("Key: %v, value: %v\n", key, val)
+	}
+	return nil
 }
 
 func GetHash(pwd []byte) string {

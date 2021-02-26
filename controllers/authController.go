@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -9,7 +10,6 @@ import (
 	"github.com/onunez-g/auth-api/auth"
 	"github.com/onunez-g/auth-api/config"
 	"github.com/onunez-g/auth-api/data"
-	"github.com/onunez-g/auth-api/mail"
 	"github.com/onunez-g/auth-api/models"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -37,7 +37,8 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(err.Error()))
 	}
 
-	err = sendEmail(user.Email, "Welcome to GoAuth!", "Hello there new fella!")
+	mailSettings := config.Cfg.GetSMTPSettings(user.Email)
+	err = mailSettings.Send("Welcome to GoAuth", "Hello there new fella!")
 	if err != nil {
 		log.Println(err.Error())
 		log.Println("Unable to send email, retry later")
@@ -51,7 +52,21 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 
 func SendConfirmationEmail(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	err := sendEmail(params["email"], "Welcome to GoAuth!", "Hello there new fella!")
+
+	payload := map[string]interface{}{
+		"confirmEmail": false,
+	}
+
+	token, err := auth.GenerateJWT(params["email"], payload)
+	if err != nil {
+		log.Println(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Unable to generate token"))
+	}
+	mailSettings := config.Cfg.GetSMTPSettings(params["email"])
+	body := "Hello there new fella! " + "Please confirm your email with this token: \n" + token
+	err = mailSettings.Send("Welcome to GoAuth", body)
+
 	if err != nil {
 		log.Println(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
@@ -61,6 +76,14 @@ func SendConfirmationEmail(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Email sent"))
 }
 
+func ActivateUser(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	if err := auth.GetJWT(params["token"]); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Errorf("Something went wrong: %s", err.Error())
+		w.Write([]byte("There was an unexpected error"))
+	}
+}
 func Login(w http.ResponseWriter, r *http.Request) {
 	var user models.UserDTO
 	var loginUser models.UserDTO
@@ -107,16 +130,4 @@ func getResponse(o interface{}) []byte {
 	}
 
 	return response
-}
-
-func sendEmail(to string, subject string, body string) error {
-	email := mail.EmailServer{
-		User: config.Cfg.GetSMTPUser(),
-		Pass: config.Cfg.GetSMTPPassword(),
-		From: config.Cfg.GetSMTPUser(),
-		Smtp: "smtp.gmail.com",
-		Port: 587,
-		To:   to,
-	}
-	return email.Send(subject, body)
 }

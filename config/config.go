@@ -4,6 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"os"
+
+	"github.com/onunez-g/auth-api/mail"
 )
 
 type Config struct {
@@ -19,6 +21,8 @@ type Config struct {
 	sessionSecret  string
 	emailUser      string
 	emailPass      string
+	emailHost      string
+	emailPort      string
 }
 
 var Cfg *Config
@@ -38,6 +42,8 @@ func Get() *Config {
 	flag.StringVar(&conf.sessionSecret, "sessionSecret", os.Getenv("SESSION"), "Cookie session secret")
 	flag.StringVar(&conf.emailUser, "emailUser", os.Getenv("SMTP_USER"), "smtp server user")
 	flag.StringVar(&conf.emailPass, "emailPass", os.Getenv("SMTP_PASS"), "smtp server password")
+	flag.StringVar(&conf.emailHost, "emailHost", os.Getenv("SMTP_HOST"), "smtp server host")
+	flag.StringVar(&conf.emailPort, "emailPort", os.Getenv("SMTP_PORT"), "smtp server port")
 	flag.Parse()
 
 	return conf
@@ -84,4 +90,15 @@ func (c *Config) GetSMTPUser() string {
 
 func (c *Config) GetSMTPPassword() string {
 	return c.emailPass
+}
+
+func (c *Config) GetSMTPSettings(to string) mail.MailSettings {
+	return mail.MailSettings{
+		User: c.emailUser,
+		Pass: c.emailPass,
+		From: c.emailUser,
+		Smtp: c.emailHost,
+		Port: c.emailPort,
+		To:   to,
+	}
 }
