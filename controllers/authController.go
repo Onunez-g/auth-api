@@ -73,16 +73,31 @@ func SendConfirmationEmail(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Unable to send email, retry later"))
 		return
 	}
-	w.Write([]byte("Email sent"))
+	w.Write([]byte("Email sent succesfully\n token: " + token))
 }
 
 func ActivateUser(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	if err := auth.GetJWT(params["token"]); err != nil {
+	var user models.UserDTO
+	claims, err := auth.GetJWT(params["token"])
+	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Errorf("Something went wrong: %s", err.Error())
 		w.Write([]byte("There was an unexpected error"))
 	}
+	if claims["user"] == "" {
+		w.WriteHeader(http.StatusExpectationFailed)
+		fmt.Errorf("Something went wrong: %s", err.Error())
+		w.Write([]byte("There's no user assigned"))
+	}
+	data.Db.Find(&user, "Email = ?", claims["user"])
+	user.EmailConfirmed = true
+	data.Db.Updates(&user)
+
+	response := getResponse(&user)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(response)
 }
 func Login(w http.ResponseWriter, r *http.Request) {
 	var user models.UserDTO
@@ -106,8 +121,10 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Incorrect credentials"))
 		return
 	}
-
-	jwtToken, err := auth.GenerateJWT(user.Username)
+	payload := map[string]interface{}{
+		"emailConfirmed": loginUser.EmailConfirmed,
+	}
+	jwtToken, err := auth.GenerateJWT(user.Username, payload)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))

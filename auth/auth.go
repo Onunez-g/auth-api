@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -74,20 +75,19 @@ func IsAuthorized(endpoint func(http.ResponseWriter, *http.Request)) http.Handle
 	})
 }
 
-func GetJWT(tokenString string) error {
+func GetJWT(tokenString string) (map[string]interface{}, error) {
 	signingKey := config.Cfg.GetJWTSecret()
 	claims := jwt.MapClaims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		return signingKey, nil
 	})
-	fmt.Println(token)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	for key, val := range claims {
-		fmt.Printf("Key: %v, value: %v\n", key, val)
+	if !token.Valid {
+		return nil, errors.New("token is not valid")
 	}
-	return nil
+	return claims, nil
 }
 
 func GetHash(pwd []byte) string {

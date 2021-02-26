@@ -5,6 +5,6 @@ type UserDTO struct {
 	Username       string `json:"username"`
 	Email          string `gorm:"unique" json:"email"`
 	Password       string `json:"-"`
-	EmailConfirmed bool   `json: emailConfirmed`
+	EmailConfirmed bool   `json:"emailConfirmed"`
 	Token          string `json:"token,omitempty" gorm:"-"`
 }
