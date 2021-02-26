@@ -25,6 +25,7 @@ func Get() *mux.Router {
 
 	r.HandleFunc("/api/auth/signup", controllers.SignUp).Methods("POST")
 	r.HandleFunc("/api/auth/login", controllers.Login).Methods("POST")
+	r.HandleFunc("/api/auth/sendemail/{email}", controllers.SendConfirmationEmail).Methods("GET")
 	r.Handle("/api/github/login", github.StateHandler(stateConfig, github.LoginHandler(oauth2Config, nil)))
 	r.Handle("/api/github/callback", github.StateHandler(stateConfig, github.CallbackHandler(oauth2Config, auth.IssueSession(), nil)))
 	return r

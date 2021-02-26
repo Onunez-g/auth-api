@@ -17,6 +17,8 @@ type Config struct {
 	githubClientId string
 	githubSecretId string
 	sessionSecret  string
+	emailUser      string
+	emailPass      string
 }
 
 var Cfg *Config
@@ -34,6 +36,8 @@ func Get() *Config {
 	flag.StringVar(&conf.githubClientId, "githubClientId", os.Getenv("CLIENT_ID"), "Github client ID")
 	flag.StringVar(&conf.githubSecretId, "githubSecretId", os.Getenv("SECRET_ID"), "Github secret ID")
 	flag.StringVar(&conf.sessionSecret, "sessionSecret", os.Getenv("SESSION"), "Cookie session secret")
+	flag.StringVar(&conf.emailUser, "emailUser", os.Getenv("SMTP_USER"), "smtp server user")
+	flag.StringVar(&conf.emailPass, "emailPass", os.Getenv("SMTP_PASS"), "smtp server password")
 	flag.Parse()
 
 	return conf
@@ -72,4 +76,12 @@ func (c *Config) GetGithubSecretId() string {
 
 func (c *Config) GetSessionSecret() []byte {
 	return []byte(c.sessionSecret)
+}
+
+func (c *Config) GetSMTPUser() string {
+	return c.emailUser
+}
+
+func (c *Config) GetSMTPPassword() string {
+	return c.emailPass
 }
